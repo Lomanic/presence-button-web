@@ -23,12 +23,13 @@ app.get("/", (req, res) => {
 
 // http://expressjs.com/en/starter/basic-routing.html
 app.get("/img", (req, res) => {
-  res.sendFile(__dirname + "/views/index.html");
-  if (fuzIsOpen && Date() - 2 * 60 * 1000 < lastSeen) {
+  if (fuzIsOpen && Date() - (2 * 60 * 1000) < lastSeen) {
+    return res.sendFile(__dirname + "/views/open.svg");
   }
+  res.sendFile(__dirname + "/views/closed.svg");
 });
 app.get("/api", (req, res) => {
-  res.send(fuzIsOpen && new Date() - 2 * 60 * 1000 < lastSeen);
+  res.send(fuzIsOpen && new Date() - (2 * 60 * 1000) < lastSeen);
 });
 
 // http://expressjs.com/en/starter/basic-routing.html
