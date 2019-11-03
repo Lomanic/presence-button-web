@@ -47,7 +47,8 @@ app.get("/status", (req, res) => {
 
   // parse login and password from headers
   const b64auth = (req.headers.authorization || "").split(" ")[1] || "";
-  const [_, login, password] = new Buffer(b64auth, 'base64').toString().match(/(.*):(.*)/) || []; // slightly modified as
+  const [_, login, password] = new Buffer(b64auth, 'base64').toString().match(/(.*):(.*)/) || []; // slightly modified as we use : in username
+
   if (
     !login ||
     !password ||
