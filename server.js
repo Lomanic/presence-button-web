@@ -43,18 +43,20 @@ app.get("/status", (req, res) => {
   const auth = {
     login: process.env.MATRIXUSERNAME,
     password: process.env.MATRIXPASSWORD
-  }; 
+  };
 
   // parse login and password from headers
   const b64auth = (req.headers.authorization || "").split(" ")[1] || "";
-  const [login, password] = new Buffer(b64auth, "base64").toString().split(":"); // won't work as we use : in username…
-
-  if (!login || !password || login !== auth.login || password !== auth.password) {
-    // Access granted...
-  }
-  
-  if (req.query.password !== process.env.PASSWORD) {
-    return res.sendStatus(401);
+  const [_, login, password] = new Buffer(b64auth, 'base64').toString().match(/(.*):(.*)/) || []; // slightly modified as
+  if (
+    !login ||
+    !password ||
+    login !== auth.login ||
+    password !== auth.password
+  ) {
+    console.log(login, password)
+    res.set("WWW-Authenticate", 'Basic realm="Authentication required"');
+    return res.status(401).send("Authentication required.");
   }
   fuzIsOpen = req.query.fuzisopen == "1";
   lastSeen = new Date();
