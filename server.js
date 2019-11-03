@@ -35,7 +35,7 @@ app.get("/api", (req, res) => {
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept"
   );
-  res.send({ fuzIsOpen, lastSeen });
+  res.send({ fuzIsOpen, lastSeen, lastClosed });
 });
 
 app.get("/status", (req, res) => {
