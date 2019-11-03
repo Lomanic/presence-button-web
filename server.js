@@ -39,11 +39,19 @@ app.get("/api", (req, res) => {
 
 // http://expressjs.com/en/starter/basic-routing.html
 app.get("/status", (req, res) => {
-  const auth = {login: process.env.MATRIXUSERNAME, password: process.env.MATRIXPASSWORD}; // change this
+  // http basic auth handling without 3rd-party lib https://stackoverflow.com/a/33905671
+  const auth = {
+    login: process.env.MATRIXUSERNAME,
+    password: process.env.MATRIXPASSWORD
+  }; 
 
   // parse login and password from headers
-  const b64auth = (req.headers.authorization || '').split(' ')[1] || '';
-  const [login, password] = new Buffer(b64auth, 'base64').toString().split(':');
+  const b64auth = (req.headers.authorization || "").split(" ")[1] || "";
+  const [login, password] = new Buffer(b64auth, "base64").toString().split(":"); // won't work as we use : in username…
+
+  if (!login || !password || login !== auth.login || password !== auth.password) {
+    // Access granted...
+  }
   
   if (req.query.password !== process.env.PASSWORD) {
     return res.sendStatus(401);
