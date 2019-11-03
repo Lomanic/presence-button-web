@@ -63,7 +63,7 @@ app.get("/status", (req, res) => {
   fuzIsOpen = req.query.fuzisopen === "1";
   lastSeen = new Date();
   try {
-    fs.writeFileSync(db, JSON.stringify({ fuzIsOpen, lastSeen }));
+    fs.writeFileSync(db, JSON.stringify({ fuzIsOpen, lastSeen, lastClosed }));
   } catch (err) {}
 
   res.sendStatus(200);
@@ -78,6 +78,11 @@ const loop = () => {
   if (lastSeen < new Date() - 2 * 60 * 1000 && lastClosed < lastSeen) {
     // the Fuz is newly closed, notify on matrix and write file to survive reboot
     lastClosed = new Date();
+    //lastNofified = new Date();
+    //https.post ... send message to Fuz process.env.MATRIXROOM
+    try {
+      fs.writeFileSync(db, JSON.stringify({ fuzIsOpen, lastSeen, lastClosed }));
+    } catch (err) {}
   }
 
   setTimeout(loop, 10 * 1000);
