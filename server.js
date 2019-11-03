@@ -47,7 +47,8 @@ app.get("/status", (req, res) => {
 
   // parse login and password from headers
   const b64auth = (req.headers.authorization || "").split(" ")[1] || "";
-  const [_, login, password] = new Buffer(b64auth, 'base64').toString().match(/(.*):(.*)/) || []; // slightly modified as we use : in username
+  const [_, login, password] =
+    new Buffer(b64auth, "base64").toString().match(/(.*):(.*)/) || []; // slightly modified as we use : in username
 
   if (
     !login ||
@@ -55,7 +56,7 @@ app.get("/status", (req, res) => {
     login !== auth.login ||
     password !== auth.password
   ) {
-    console.log(login, password)
+    console.log(login, password);
     res.set("WWW-Authenticate", 'Basic realm="Authentication required"');
     return res.status(401).send("Authentication required.");
   }
