@@ -69,6 +69,10 @@ const listener = app.listen(process.env.PORT, function() {
   console.log("Your app is listening on port " + listener.address().port);
 });
 
+setTimeout(() => {
+  
+}, 10 * 1000)
+
 if (process.env.PROJECT_DOMAIN != "") {
   process.on("SIGTERM", function() {
     console.log("SIGTERM received, sending SOS to Resurrect...");
