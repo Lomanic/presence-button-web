@@ -24,9 +24,9 @@ app.get("/", (req, res) => {
 // http://expressjs.com/en/starter/basic-routing.html
 app.get("/img", (req, res) => {
   if (fuzIsOpen && new Date() - 2 * 60 * 1000 < lastSeen) {
-    return res.sendFile(__dirname + "/views/open.svg");
+    return res.sendFile(__dirname + "/views/open.svg"); // https://www.flaticon.com/free-icon/open_1234189
   }
-  res.sendFile(__dirname + "/views/closed.svg");
+  res.sendFile(__dirname + "/views/closed.svg"); // https://www.flaticon.com/free-icon/closed_1234190
 });
 app.get("/api", (req, res) => {
   res.header("Access-Control-Allow-Origin", "*");
@@ -34,12 +34,17 @@ app.get("/api", (req, res) => {
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept"
   );
-  res.send({    fuzIsOpen,    lastSeen
-  });
+  res.send({ fuzIsOpen, lastSeen });
 });
 
 // http://expressjs.com/en/starter/basic-routing.html
 app.get("/status", (req, res) => {
+  const auth = {login: process.env.MATRIXUSERNAME, password: process.env.MATRIXPASSWORD}; // change this
+
+  // parse login and password from headers
+  const b64auth = (req.headers.authorization || '').split(' ')[1] || '';
+  const [login, password] = new Buffer(b64auth, 'base64').toString().split(':');
+  
   if (req.query.password !== process.env.PASSWORD) {
     return res.sendStatus(401);
   }
