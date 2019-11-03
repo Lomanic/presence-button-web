@@ -76,8 +76,10 @@ const listener = app.listen(process.env.PORT, function() {
 const loop = () => {
   console.log("loop", lastClosed);
   if (lastSeen < new Date() - 2 * 60 * 1000 && lastClosed < lastSeen) {
+    // the Fuz is newly closed, notify on matrix and write file to survive reboot
     lastClosed = new Date();
   }
+
   setTimeout(loop, 10 * 1000);
 };
 setTimeout(loop, 1 * 1000); // give some time for presence button to show up (1 min)
