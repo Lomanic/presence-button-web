@@ -8,10 +8,10 @@ const db = "./.data/data.json";
 
 try {
   var content = fs.readFileSync(db, "utf8");
-  fuzIsOpen = JSON.parse(content)["fuzIsOpen"];
-  lastSeen = new Date(JSON.parse(content)["lastSeen"]);
-  lastNofified = new Date(JSON.parse(content)["lastNofified"]);
-  lastClosed = new Date(JSON.parse(content)["lastClosed"]);
+  fuzIsOpen = JSON.parse(content)["fuzIsOpen"] || fuzIsOpen;
+  lastSeen = new Date(JSON.parse(content)["lastSeen"] || lastSeen);
+  lastNofified = new Date(JSON.parse(content)["lastNofified"] || lastNofified);
+  lastClosed = new Date(JSON.parse(content)["lastClosed"] || lastClosed);
 } catch (err) {}
 
 const express = require("express");
@@ -73,11 +73,14 @@ const listener = app.listen(process.env.PORT, function() {
   console.log("Your app is listening on port " + listener.address().port);
 });
 
-setTimeout(() => {
-  if (!fuzIsOpen || lastSeen < new Date() - 2 * 60 * 1000) {
-    
+const loop = () => {
+  console.log("loop", lastClosed);
+  if (lastSeen < new Date() - 2 * 60 * 1000 && lastClosed < lastSeen) {
+    lastClosed = new Date();
   }
-}, 10 * 1000)
+  setTimeout(loop, 10 * 1000);
+};
+setTimeout(loop, 1 * 1000); // give some time for presence button to show up (1 min)
 
 if (process.env.PROJECT_DOMAIN != "") {
   process.on("SIGTERM", function() {
