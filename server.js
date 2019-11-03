@@ -1,5 +1,7 @@
 var fuzIsOpen = false;
 var lastSeen = new Date("1970-01-01");
+var lastNofified = new Date("1970-01-01");
+var lastClosed = new Date("1970-01-01");
 
 const fs = require("fs");
 const db = "./.data/data.json";
@@ -8,6 +10,8 @@ try {
   var content = fs.readFileSync(db, "utf8");
   fuzIsOpen = JSON.parse(content)["fuzIsOpen"];
   lastSeen = new Date(JSON.parse(content)["lastSeen"]);
+  lastNofified = new Date(JSON.parse(content)["lastNofified"]);
+  lastClosed = new Date(JSON.parse(content)["lastClosed"]);
 } catch (err) {}
 
 const express = require("express");
@@ -70,7 +74,9 @@ const listener = app.listen(process.env.PORT, function() {
 });
 
 setTimeout(() => {
-  
+  if (!fuzIsOpen || lastSeen < new Date() - 2 * 60 * 1000) {
+    
+  }
 }, 10 * 1000)
 
 if (process.env.PROJECT_DOMAIN != "") {
