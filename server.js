@@ -10,7 +10,6 @@ try {
   lastSeen = new Date(JSON.parse(content)["lastSeen"]);
 } catch (err) {}
 
-console.log(JSON.stringify({ fuzIsOpen, lastSeen }));
 const express = require("express");
 const app = express();
 
@@ -25,13 +24,11 @@ app.get("/", (req, res) => {
 // http://expressjs.com/en/starter/basic-routing.html
 app.get("/img", (req, res) => {
   res.sendFile(__dirname + "/views/index.html");
-  if (fuzIsOpen && Date() - 5 * 60 * 1000 < lastSeen) {
-    
+  if (fuzIsOpen && Date() - 2 * 60 * 1000 < lastSeen) {
   }
 });
 app.get("/api", (req, res) => {
-  console.log(fuzIsOpen, new Date() - 5 * 1000 < lastSeen)
-  res.send(fuzIsOpen && new Date() - 5 * 1000 < lastSeen)
+  res.send(fuzIsOpen && new Date() - 2 * 60 * 1000 < lastSeen);
 });
 
 // http://expressjs.com/en/starter/basic-routing.html
@@ -40,7 +37,7 @@ app.get("/status", (req, res) => {
     return res.sendStatus(401);
   }
   fuzIsOpen = req.query.fuzisopen == "1";
-  lastSeen = Date();
+  lastSeen = new Date();
   try {
     fs.writeFileSync(db, JSON.stringify({ fuzIsOpen, lastSeen }));
   } catch (err) {}
