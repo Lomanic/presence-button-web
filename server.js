@@ -56,7 +56,7 @@ app.get("/status", (req, res) => {
     res.set("WWW-Authenticate", 'Basic realm="Authentication required"');
     return res.status(401).send("Authentication required.");
   }
-  fuzIsOpen = req.query.fuzisopen == "1";
+  fuzIsOpen = req.query.fuzisopen === "1";
   lastSeen = new Date();
   try {
     fs.writeFileSync(db, JSON.stringify({ fuzIsOpen, lastSeen }));
