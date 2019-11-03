@@ -30,7 +30,7 @@ app.get("/img", (req, res) => {
   }
 });
 app.get("/api", (req, res) => {
-  res.send(fuzIsOpen && Date() - 5 * 1000 < lastSeen)
+  res.send(fuzIsOpen && new Date().getTime() - 5 * 1000 < lastSeen.getTime())
 });
 
 // http://expressjs.com/en/starter/basic-routing.html
@@ -38,7 +38,7 @@ app.get("/status", (req, res) => {
   if (req.query.password !== process.env.PASSWORD) {
     return res.sendStatus(401);
   }
-  fuzIsOpen = req.query.fuzisopen === "1";
+  fuzIsOpen = req.query.fuzisopen == "1";
   lastSeen = Date();
   try {
     fs.writeFileSync(db, JSON.stringify({ fuzIsOpen, lastSeen }));
