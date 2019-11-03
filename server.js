@@ -30,7 +30,8 @@ app.get("/img", (req, res) => {
   }
 });
 app.get("/api", (req, res) => {
-  res.send(fuzIsOpen && new Date().getTime() - 5 * 1000 < lastSeen.getTime())
+  console.log(fuzIsOpen, new Date() - 5 * 1000 < lastSeen)
+  res.send(fuzIsOpen && new Date() - 5 * 1000 < lastSeen)
 });
 
 // http://expressjs.com/en/starter/basic-routing.html
