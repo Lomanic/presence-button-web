@@ -1,3 +1,5 @@
+var fuzIsOpen = false;
+
 const express = require("express");
 const app = express();
 
@@ -5,13 +7,24 @@ const app = express();
 app.use(express.static("public"));
 
 // http://expressjs.com/en/starter/basic-routing.html
-app.get("/", function(request, response) {
-  response.sendFile(__dirname + "/views/index.html");
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/views/index.html");
 });
 
 // http://expressjs.com/en/starter/basic-routing.html
-app.get("/img", function(request, response) {
-  response.sendFile(__dirname + "/views/index.html");
+app.get("/img", (req, res) => {
+  res.sendFile(__dirname + "/views/index.html");
+});
+
+// http://expressjs.com/en/starter/basic-routing.html
+app.get("/status", (req, res) => {
+  if (req.query.password !== process.env.PASSWORD) {
+    return res.sendStatus(401);
+  }
+  if (req.query.fuzisopen === "1") {
+    fuzIsOpen = true;
+  }
+  res.sendStatus(200);
 });
 
 const listener = app.listen(process.env.PORT, function() {
