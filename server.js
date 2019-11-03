@@ -6,9 +6,11 @@ const db = "./.data/data.json";
 
 try {
   var content = fs.readFileSync(db, "utf8");
-  fuzIsOpen = JSON.parse(content)[""]
+  fuzIsOpen = JSON.parse(content)["fuzIsOpen"];
+  lastSeen = new Date(JSON.parse(content)["lastSeen"]);
 } catch (err) {}
 
+console.log(JSON.stringify({ fuzIsOpen, lastSeen }));
 const express = require("express");
 const app = express();
 
@@ -23,8 +25,12 @@ app.get("/", (req, res) => {
 // http://expressjs.com/en/starter/basic-routing.html
 app.get("/img", (req, res) => {
   res.sendFile(__dirname + "/views/index.html");
-  if (fuzIsOpen) {
+  if (fuzIsOpen && Date() - 5 * 60 * 1000 < lastSeen) {
+    
   }
+});
+app.get("/api", (req, res) => {
+  res.send(fuzIsOpen && Date() - 5 * 1000 < lastSeen)
 });
 
 // http://expressjs.com/en/starter/basic-routing.html
@@ -32,9 +38,12 @@ app.get("/status", (req, res) => {
   if (req.query.password !== process.env.PASSWORD) {
     return res.sendStatus(401);
   }
-  if (req.query.fuzisopen === "1") {
-    fuzIsOpen = true;
-  }
+  fuzIsOpen = req.query.fuzisopen === "1";
+  lastSeen = Date();
+  try {
+    fs.writeFileSync(db, JSON.stringify({ fuzIsOpen, lastSeen }));
+  } catch (err) {}
+
   res.sendStatus(200);
 });
 
