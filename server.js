@@ -1,12 +1,5 @@
-// server.js
-// where your node app starts
-
-// init project
 const express = require("express");
 const app = express();
-
-// we've started you off with Express,
-// but feel free to use whatever libs or frameworks you'd like through `package.json`.
 
 // http://expressjs.com/en/starter/static-files.html
 app.use(express.static("public"));
@@ -16,7 +9,16 @@ app.get("/", function(request, response) {
   response.sendFile(__dirname + "/views/index.html");
 });
 
-// listen for requests :)
+// http://expressjs.com/en/starter/basic-routing.html
+app.get("/img", function(request, response) {
+  response.sendFile(__dirname + "/views/index.html");
+});
+
 const listener = app.listen(process.env.PORT, function() {
   console.log("Your app is listening on port " + listener.address().port);
+});
+
+process.on("SIGTERM", function () {
+  console.log("SIGTERM received, sending SOS to Resurrect...");
+  require('https').get("https://resurrect.glitch.me/"+process.env.PROJECT_DOMAIN+"", process.exit)
 });

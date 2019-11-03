@@ -10,38 +10,32 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Welcome to Glitch!</title>
-    <meta name="description" content="A cool thing made with Glitch">
-    <link id="favicon" rel="icon" href="https://glitch.com/edit/favicon-app.ico" type="image/x-icon">
+    <title>Fuz presence button</title>
+    <meta name="description" content="Public API for Fuz hackerspace presence button">
+    <link id="favicon" rel="icon" href="https://fuz.frama.site/medias/5c02ae843c25e.jpg" type="image/x-icon">
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- import the webpage's stylesheet -->
     <link rel="stylesheet" href="/style.css">
-    
-    <!-- import the webpage's client-side javascript file -->
-    <script src="/client.js" defer></script>
   </head>
   <body>
     <header>
       <h1>
-        A Dream of the Future
+        Fuz presence button public API
       </h1>
     </header>
 
     <main>
-      <p class="bold">Oh hi,</p>
       
-      <p>Tell me your hopes and dreams:</p>
-      
-      <form>
-        <input name="dream" type="text" maxlength="100" placeholder="Dreams!" aria-labelledby="submit-dream">
-        <button type="submit" id="submit-dream">Submit Dream</button>
-      </form>
+      <p>See documentation for this project on <a href="https://wiki.fuz.re/doku.php?id=projets:fuz:presence_button">Fuz wiki</a>:</p>
       
       <section class="dreams">
-        <ul id="dreams"></ul>
+        <ul id="dreams">
+          <li><a href="/img">image API</a></li>
+          <li><a href="/api">ajax API</a></li>
+        </ul>
       </section>
     </main>
 
