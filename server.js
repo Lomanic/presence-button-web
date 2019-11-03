@@ -1,4 +1,13 @@
 var fuzIsOpen = false;
+var lastSeen = new Date("1970-01-01");
+
+const fs = require("fs");
+const db = "./.data/data.json";
+
+try {
+  var content = fs.readFileSync(db, "utf8");
+  fuzIsOpen = JSON.parse(content)[""]
+} catch (err) {}
 
 const express = require("express");
 const app = express();
@@ -14,6 +23,8 @@ app.get("/", (req, res) => {
 // http://expressjs.com/en/starter/basic-routing.html
 app.get("/img", (req, res) => {
   res.sendFile(__dirname + "/views/index.html");
+  if (fuzIsOpen) {
+  }
 });
 
 // http://expressjs.com/en/starter/basic-routing.html
@@ -31,7 +42,10 @@ const listener = app.listen(process.env.PORT, function() {
   console.log("Your app is listening on port " + listener.address().port);
 });
 
-process.on("SIGTERM", function () {
+process.on("SIGTERM", function() {
   console.log("SIGTERM received, sending SOS to Resurrect...");
-  require('https').get("https://resurrect.glitch.me/"+process.env.PROJECT_DOMAIN+"", process.exit)
+  require("https").get(
+    "https://resurrect.glitch.me/" + process.env.PROJECT_DOMAIN + "",
+    process.exit
+  );
 });
