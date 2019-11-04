@@ -9,6 +9,7 @@ var lastClosed = new Date("1970-01-01");
 
 const fs = require("fs");
 const db = "./.data/data.json";
+const closingTimeout = 5 * 60 * 1000; // 5 mins
 
 try {
   var content = fs.readFileSync(db, "utf8");
@@ -119,7 +120,13 @@ request.post(
               process.env.MATRIXUSERNAME.substring(
                 process.env.MATRIXUSERNAME.indexOf(":") + 1
               ) +
-              "/_matrix/client/r0/rooms/" + process.env.MATRIXROOM + "/send/m.room.message/" + String(millis()) + "?access_token=" + accessToken + "&limit=1",
+              "/_matrix/client/r0/rooms/" +
+              process.env.MATRIXROOM +
+              "/send/m.room.message/" +
+              new Date().getTime() +
+              "?access_token=" +
+              accessToken +
+              "&limit=1",
             body: JSON.stringify({
               msgtype: "m.text",
               body: process.env.MATRIXMESSAGE
@@ -128,17 +135,22 @@ request.post(
               "Content-Type": "application/json"
             }
           },
-          function(error, response, body) {}
+          function(error, response, body2) {
+            if (!error) {
+              try {
+                fs.writeFileSync(
+                  db,
+                  JSON.stringify({ fuzIsOpen, lastSeen, lastClosed })
+                );
+              } catch (err) {}
+            }
+            console.log(body2)
+            setTimeout(loop, 10 * 1000);
+          }
         );
-        try {
-          fs.writeFileSync(
-            db,
-            JSON.stringify({ fuzIsOpen, lastSeen, lastClosed })
-          );
-        } catch (err) {}
+      } else {
+        setTimeout(loop, 10 * 1000);
       }
-
-      setTimeout(loop, 10 * 1000);
     };
     setTimeout(loop, 1 * 1000); // give some time for presence button to show up (1 min)
   }
