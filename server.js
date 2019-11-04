@@ -104,7 +104,7 @@ request.post(
   },
   function(error, response, body) {
     console.log(body);
-    const token = JSON.parse(body)["access_token"];
+    const accessToken = JSON.parse(body)["access_token"];
     const loop = () => {
       console.log("loop", lastClosed);
       if (lastSeen < new Date() - 2 * 60 * 1000 && lastClosed < lastSeen) {
@@ -112,7 +112,24 @@ request.post(
         lastClosed = new Date();
         //lastNofified = new Date();
         //https.post ... send message to Fuz process.env.MATRIXROOM
-
+        request.put(
+          {
+            url:
+              "https://" +
+              process.env.MATRIXUSERNAME.substring(
+                process.env.MATRIXUSERNAME.indexOf(":") + 1
+              ) +
+              "/_matrix/client/r0/rooms/" + process.env.MATRIXROOM + "/send/m.room.message/" + String(millis()) + "?access_token=" + accessToken + "&limit=1",
+            body: JSON.stringify({
+              msgtype: "m.text",
+              body: process.env.MATRIXMESSAGE
+            }),
+            headers: {
+              "Content-Type": "application/json"
+            }
+          },
+          function(error, response, body) {}
+        );
         try {
           fs.writeFileSync(
             db,
