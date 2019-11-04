@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const https = require('https');
+const request = require("request");
 
 var fuzIsOpen = false;
 var lastSeen = new Date("1970-01-01");
@@ -75,21 +75,40 @@ const listener = app.listen(process.env.PORT, function() {
   console.log("Your app is listening on port " + listener.address().port);
 });
 
-const loop = () => {
-  console.log("loop", lastClosed);
-  if (lastSeen < new Date() - 2 * 60 * 1000 && lastClosed < lastSeen) {
-    // the Fuz is newly closed, notify on matrix and write file to survive reboot
-    lastClosed = new Date();
-    //lastNofified = new Date();
-    //https.post ... send message to Fuz process.env.MATRIXROOM
-    try {
-      fs.writeFileSync(db, JSON.stringify({ fuzIsOpen, lastSeen, lastClosed }));
-    } catch (err) {}
-  }
+request
+  .post({
+    url:
+      "https://" +
+      process.env.MATRIXUSERNAME.substring(
+        process.env.MATRIXUSERNAME.indexOf(":") + 1
+      ) +
+      "/_matrix/client/r0/login",
+    body: JSON.stringify({ type: "m.login.password", user:  }),
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+  .on("response", function(response) {
+    const loop = () => {
+      console.log("loop", lastClosed);
+      if (lastSeen < new Date() - 2 * 60 * 1000 && lastClosed < lastSeen) {
+        // the Fuz is newly closed, notify on matrix and write file to survive reboot
+        lastClosed = new Date();
+        //lastNofified = new Date();
+        //https.post ... send message to Fuz process.env.MATRIXROOM
 
-  setTimeout(loop, 10 * 1000);
-};
-setTimeout(loop, 1 * 1000); // give some time for presence button to show up (1 min)
+        try {
+          fs.writeFileSync(
+            db,
+            JSON.stringify({ fuzIsOpen, lastSeen, lastClosed })
+          );
+        } catch (err) {}
+      }
+
+      setTimeout(loop, 10 * 1000);
+    };
+    setTimeout(loop, 1 * 1000); // give some time for presence button to show up (1 min)
+  });
 
 if (process.env.PROJECT_DOMAIN != "") {
   process.on("SIGTERM", function() {
