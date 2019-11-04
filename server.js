@@ -29,6 +29,7 @@ app.get("/img", (req, res) => {
   }
   res.sendFile(__dirname + "/views/closed.svg"); // https://www.flaticon.com/free-icon/closed_1234190
 });
+
 app.get("/api", (req, res) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header(
