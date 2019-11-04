@@ -26,7 +26,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/img", (req, res) => {
-  if (fuzIsOpen && new Date() - 2 * 60 * 1000 < lastSeen) {
+  if (fuzIsOpen && new Date() - closingTimeout < lastSeen) {
     return res.sendFile(__dirname + "/views/open.svg"); // https://www.flaticon.com/free-icon/open_1234189
   }
   res.sendFile(__dirname + "/views/closed.svg"); // https://www.flaticon.com/free-icon/closed_1234190
@@ -108,7 +108,7 @@ request.post(
     const accessToken = JSON.parse(body)["access_token"];
     const loop = () => {
       console.log("loop", lastClosed);
-      if (lastSeen < new Date() - 2 * 60 * 1000 && lastClosed < lastSeen) {
+      if (lastSeen < new Date() - closingTimeout && lastClosed < lastSeen) {
         // the Fuz is newly closed, notify on matrix and write file to survive reboot
         lastClosed = new Date();
         //lastNofified = new Date();
@@ -152,7 +152,7 @@ request.post(
         setTimeout(loop, 10 * 1000);
       }
     };
-    setTimeout(loop, 1 * 1000); // give some time for presence button to show up (1 min)
+    setTimeout(loop, 1 * 60 * 1000); // give some time for presence button to show up (1 min)
   }
 );
 
