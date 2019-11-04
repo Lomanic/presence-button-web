@@ -1,3 +1,7 @@
+const express = require("express");
+const app = express();
+const https = require('https');
+
 var fuzIsOpen = false;
 var lastSeen = new Date("1970-01-01");
 var lastNofified = new Date("1970-01-01");
@@ -13,9 +17,6 @@ try {
   lastNofified = new Date(JSON.parse(content)["lastNofified"] || lastNofified);
   lastClosed = new Date(JSON.parse(content)["lastClosed"] || lastClosed);
 } catch (err) {}
-
-const express = require("express");
-const app = express();
 
 app.use(express.static("public"));
 
