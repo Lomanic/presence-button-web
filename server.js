@@ -75,20 +75,36 @@ const listener = app.listen(process.env.PORT, function() {
   console.log("Your app is listening on port " + listener.address().port);
 });
 
-request
-  .post({
+request.post(
+  {
     url:
       "https://" +
       process.env.MATRIXUSERNAME.substring(
         process.env.MATRIXUSERNAME.indexOf(":") + 1
       ) +
       "/_matrix/client/r0/login",
-    body: JSON.stringify({ type: "m.login.password", user:  }),
+    body: JSON.stringify({
+      type: "m.login.password",
+      user: process.env.MATRIXUSERNAME.substring(
+        0,
+        process.env.MATRIXUSERNAME.indexOf(":")
+      ),
+      password: process.env.MATRIXPASSWORD,
+      identifier: {
+        type: "m.id.user",
+        user: process.env.MATRIXUSERNAME.substring(
+          0,
+          process.env.MATRIXUSERNAME.indexOf(":")
+        )
+      }
+    }),
     headers: {
       "Content-Type": "application/json"
     }
-  })
-  .on("response", function(response) {
+  },
+  function(error, response, body) {
+    console.log(body);
+    const token = JSON.parse(body)["access_token"];
     const loop = () => {
       console.log("loop", lastClosed);
       if (lastSeen < new Date() - 2 * 60 * 1000 && lastClosed < lastSeen) {
@@ -108,7 +124,8 @@ request
       setTimeout(loop, 10 * 1000);
     };
     setTimeout(loop, 1 * 1000); // give some time for presence button to show up (1 min)
-  });
+  }
+);
 
 if (process.env.PROJECT_DOMAIN != "") {
   process.on("SIGTERM", function() {
