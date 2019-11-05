@@ -108,7 +108,7 @@ request.post(
     const accessToken = JSON.parse(body)["access_token"];
     const loop = () => {
       console.log("loop", lastClosed);
-      if (lastSeen < new Date() - closingTimeout && lastClosed < lastSeen) {
+      if (fuzIsOpen && lastSeen < new Date() - closingTimeout && lastClosed < lastSeen) {
         // the Fuz is newly closed, notify on matrix and write file to survive reboot
         lastClosed = new Date();
         //lastNofified = new Date();
