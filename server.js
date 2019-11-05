@@ -108,10 +108,12 @@ request.post(
     const accessToken = JSON.parse(body)["access_token"];
     const loop = () => {
       console.log("loop", lastClosed);
-      if (fuzIsOpen && lastSeen < new Date() - closingTimeout && lastClosed < lastSeen) {
+      if (
+        fuzIsOpen &&
+        lastSeen < new Date() - closingTimeout &&
+        lastClosed < lastSeen
+      ) {
         // the Fuz is newly closed, notify on matrix and write file to survive reboot
-        lastClosed = new Date();
-        //lastNofified = new Date();
         //https.post ... send message to Fuz process.env.MATRIXROOM
         request.put(
           {
@@ -138,13 +140,14 @@ request.post(
           function(error, response, body2) {
             if (!error) {
               try {
+                lastClosed = new Date();
                 fs.writeFileSync(
                   db,
                   JSON.stringify({ fuzIsOpen, lastSeen, lastClosed })
                 );
               } catch (err) {}
             }
-            console.log(body2)
+            console.log(body2);
             setTimeout(loop, 10 * 1000);
           }
         );
