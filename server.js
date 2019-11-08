@@ -9,7 +9,7 @@ var lastClosed = new Date("1970-01-01");
 
 const fs = require("fs");
 const db = "./.data/data.json";
-const closingTimeout = 30 * 60 * 1000; // 5 mins
+const closingTimeout = 5 * 60 * 1000; // 5 mins
 
 try {
   var content = fs.readFileSync(db, "utf8");
