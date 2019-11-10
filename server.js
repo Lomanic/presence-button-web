@@ -26,7 +26,10 @@ app.get("/", (req, res) => {
 });
 
 app.get("/img", (req, res) => {
-  res.header("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.header(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate"
+  );
   res.header("Pragma", "no-cache");
   res.header("Expires", "0");
   if (fuzIsOpen && new Date() - closingTimeout < lastSeen) {
