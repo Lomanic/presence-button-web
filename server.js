@@ -26,6 +26,9 @@ app.get("/", (req, res) => {
 });
 
 app.get("/img", (req, res) => {
+  res.header("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.header("Pragma", "no-cache");
+  res.header("Expires", "0");
   if (fuzIsOpen && new Date() - closingTimeout < lastSeen) {
     return res.sendFile(__dirname + "/views/open.svg"); // https://www.flaticon.com/free-icon/open_1234189, maybe try https://flaticons.net/customize.php?dir=Miscellaneous&icon=Open.png without attribution
   }
