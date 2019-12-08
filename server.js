@@ -20,8 +20,22 @@ try {
 } catch (err) {}
 
 app.use(express.static("public"));
+app.enable("trust proxy"); // needed for HTTP -> HTTPS redirect and successful test against req.secure
+
+const redirectToHTTPS = (req, res, next) => {
+  if (req.secure) {
+    // request was via https, so do no special handling
+    next();
+  } else {
+    // request was via http, so redirect to https
+    res.redirect("https://" + req.headers.host + req.url);
+  }
+};
 
 app.get("/", (req, res) => {
+  if (!req.secure) {
+    return res.redirect(["https://", req.get("Host"), req.baseUrl].join(""));
+  }
   res.sendFile(__dirname + "/views/index.html");
 });
 
@@ -120,7 +134,7 @@ request.post(
         lastClosed < lastSeen
       ) {
         // the Fuz is newly closed, notify on matrix and write file to survive reboot
-        //https.post ... send message to Fuz process.env.MATRIXROOM
+        //https.put ... send message to Fuz process.env.MATRIXROOM
         request.put(
           {
             url:
