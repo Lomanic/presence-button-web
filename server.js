@@ -22,6 +22,7 @@ try {
 app.use(express.static("public"));
 app.enable("trust proxy"); // needed for HTTP -> HTTPS redirect and successful test against req.secure
 
+// redirect every route but /status as it's used by the ESP to send its status https://stackoverflow.com/a/49176816
 const redirectToHTTPS = (req, res, next) => {
   if (req.secure) {
     // request was via https, so do no special handling
@@ -31,11 +32,11 @@ const redirectToHTTPS = (req, res, next) => {
     res.redirect("https://" + req.headers.host + req.url);
   }
 };
+app.use("/", redirectToHTTPS);
+app.use("/api", redirectToHTTPS);
+app.use("/img", redirectToHTTPS);
 
 app.get("/", (req, res) => {
-  if (!req.secure) {
-    return res.redirect(["https://", req.get("Host"), req.baseUrl].join(""));
-  }
   res.sendFile(__dirname + "/views/index.html");
 });
 
