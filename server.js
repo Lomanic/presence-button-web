@@ -32,10 +32,10 @@ const redirectToHTTPS = (req, res, next) => {
     res.redirect("https://" + req.headers.host + req.url);
   }
 };
-app.use("/", redirectToHTTPS);
 app.use("/api", redirectToHTTPS);
 app.use("/img", redirectToHTTPS);
 
+app.get("/", redirectToHTTPS);
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/views/index.html");
 });
