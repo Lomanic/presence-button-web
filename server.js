@@ -35,7 +35,7 @@ const redirectToHTTPS = (req, res, next) => {
 app.use("/api", redirectToHTTPS);
 app.use("/img", redirectToHTTPS);
 
-app.get("/", redirectToHTTPS);
+app.all("/", redirectToHTTPS); // no app.use here because it would match every path
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/views/index.html");
 });
