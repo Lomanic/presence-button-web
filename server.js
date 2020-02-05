@@ -130,7 +130,7 @@ request.post(
     const loop = () => {
       console.log("loop", lastClosed);
       if (
-        fuzIsOpen &&
+        //fuzIsOpen &&
         lastSeen < new Date() - closingTimeout &&
         lastClosed < lastSeen
       ) {
@@ -152,7 +152,9 @@ request.post(
               "&limit=1",
             body: JSON.stringify({
               msgtype: "m.text",
-              body: process.env.MATRIXMESSAGE
+              body:
+                process.env.MATRIXMESSAGE +
+                (fuzIsOpen ? "" : " (crash ou oubli)")
             }),
             headers: {
               "Content-Type": "application/json"
