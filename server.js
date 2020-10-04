@@ -4,20 +4,25 @@ const request = require("request");
 
 var fuzIsOpen = false;
 var lastSeen = new Date("1970-01-01");
-var lastNofified = new Date("1970-01-01");
+var lastOpened = new Date("1970-01-01");
 var lastClosed = new Date("1970-01-01");
 
 const fs = require("fs");
+const path = require("path");
 const db = "./.data/data.json";
-const closingTimeout = 5 * 60 * 1000; // 5 mins
+const defaultClosingTimeout = 5 * 60 * 1000; // 5 mins
 
 try {
+  fs.mkdirSync(path.dirname(db), { recursive: true });
+} catch (err) {}
+try {
   var content = fs.readFileSync(db, "utf8");
+  
   fuzIsOpen = JSON.parse(content)["fuzIsOpen"] || fuzIsOpen;
   lastSeen = new Date(JSON.parse(content)["lastSeen"] || lastSeen);
-  lastNofified = new Date(JSON.parse(content)["lastNofified"] || lastNofified);
+  lastOpened = new Date(JSON.parse(content)["lastOpened"] || lastOpened);
   lastClosed = new Date(JSON.parse(content)["lastClosed"] || lastClosed);
-} catch (err) {}
+} catch (err) {console.log("err", err)}
 
 app.use(express.static("public"));
 app.enable("trust proxy"); // needed for HTTP -> HTTPS redirect and successful test against req.secure
@@ -41,6 +46,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/img", (req, res) => {
+  const closingTimeout = (typeof req.query.closingTimeout !== 'undefined')? req.query.closingTimeout : defaultClosingTimeout;
   res.header(
     "Cache-Control",
     "no-store, no-cache, must-revalidate, proxy-revalidate"
@@ -48,9 +54,13 @@ app.get("/img", (req, res) => {
   res.header("Pragma", "no-cache");
   res.header("Expires", "0");
   if (fuzIsOpen && new Date() - closingTimeout < lastSeen) {
-    return res.sendFile(__dirname + "/views/open.svg"); // https://www.flaticon.com/free-icon/open_1234189, maybe try https://flaticons.net/customize.php?dir=Miscellaneous&icon=Open.png without attribution
+    // https://www.iconfinder.com/icons/1871431/online_open_shop_shopping_sign_icon
+    // formerly https://www.flaticon.com/free-icon/open_1234189, maybe try https://flaticons.net/customize.php?dir=Miscellaneous&icon=Open.png without attribution
+    return res.sendFile(__dirname + "/views/open.svg");
   }
-  res.sendFile(__dirname + "/views/closed.svg"); // https://www.flaticon.com/free-icon/closed_1234190, maybe try https://flaticons.net/customize.php?dir=Miscellaneous&icon=Closed.png without attribution
+  // https://www.iconfinder.com/icons/1871435/closed_online_shop_shopping_sign_icon
+  // formerly https://www.flaticon.com/free-icon/closed_1234190, maybe try https://flaticons.net/customize.php?dir=Miscellaneous&icon=Closed.png without attribution
+  res.sendFile(__dirname + "/views/closed.svg");
 });
 
 app.get("/api", (req, res) => {
@@ -59,7 +69,20 @@ app.get("/api", (req, res) => {
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept"
   );
-  res.send({ fuzIsOpen, lastSeen, lastClosed });
+  res.header("Content-Type", "application/json");
+  res.send(
+    JSON.stringify(
+      {
+        fuzIsOpen,
+        lastSeen,
+        lastOpened,
+        lastClosed,
+        processUptime: formatSeconds(process.uptime())
+      },
+      null,
+      4
+    )
+  );
 });
 
 app.get("/status", (req, res) => {
@@ -80,107 +103,131 @@ app.get("/status", (req, res) => {
     login !== auth.login ||
     password !== auth.password
   ) {
-    console.log(login, password);
     res.set("WWW-Authenticate", 'Basic realm="Authentication required"');
     return res.status(401).send("Authentication required.");
   }
   fuzIsOpen = req.query.fuzisopen === "1";
   lastSeen = new Date();
   try {
-    fs.writeFileSync(db, JSON.stringify({ fuzIsOpen, lastSeen, lastClosed }));
+    fs.writeFileSync(db, JSON.stringify({ fuzIsOpen, lastSeen, lastOpened, lastClosed }));
   } catch (err) {}
 
   res.sendStatus(200);
+  if (
+    fuzIsOpen &&
+    lastOpened < lastClosed
+  ) {
+    // the Fuz is newly opened, notify on matrix and write file to survive reboot
+    request.put(
+      {
+        url:
+          "https://" +
+          process.env.MATRIXUSERNAME.substring(
+            process.env.MATRIXUSERNAME.indexOf(":") + 1
+          ) +
+          "/_matrix/client/r0/rooms/" +
+          process.env.MATRIXROOM +
+          "/send/m.room.message/" +
+          new Date().getTime() +
+          "?access_token=" +
+          accessToken +
+          "&limit=1",
+        body: JSON.stringify({
+          msgtype: "m.text",
+          body:
+            (new Date().getDay() === 3 ? "C'est Fuzcredi ! " : "") + process.env.MATRIXOPENINGMESSAGE
+        }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      },
+      function(error, response, body2) {
+        if (!error) {
+          try {
+            lastOpened = new Date();
+            fs.writeFileSync(
+              db,
+              JSON.stringify({ fuzIsOpen, lastSeen, lastOpened, lastClosed })
+            );
+          } catch (err) {}
+        }
+        console.log(body2);
+      }
+    );
+  }
 });
 
 const listener = app.listen(process.env.PORT, function() {
   console.log("Your app is listening on port " + listener.address().port);
 });
 
-request.post(
-  {
-    url:
-      "https://" +
-      process.env.MATRIXUSERNAME.substring(
-        process.env.MATRIXUSERNAME.indexOf(":") + 1
-      ) +
-      "/_matrix/client/r0/login",
-    body: JSON.stringify({
-      type: "m.login.password",
-      user: process.env.MATRIXUSERNAME.substring(
-        0,
-        process.env.MATRIXUSERNAME.indexOf(":")
-      ),
-      password: process.env.MATRIXPASSWORD,
-      identifier: {
-        type: "m.id.user",
-        user: process.env.MATRIXUSERNAME.substring(
-          0,
-          process.env.MATRIXUSERNAME.indexOf(":")
-        )
-      }
-    }),
-    headers: {
-      "Content-Type": "application/json"
-    }
-  },
-  function(error, response, body) {
-    console.log(body);
-    const accessToken = JSON.parse(body)["access_token"];
-    const loop = () => {
-      console.log("loop", lastClosed);
-      if (
-        //fuzIsOpen &&
-        lastSeen < new Date() - closingTimeout &&
-        lastClosed < lastSeen
-      ) {
-        // the Fuz is newly closed, notify on matrix and write file to survive reboot
-        //https.put ... send message to Fuz process.env.MATRIXROOM
-        request.put(
-          {
-            url:
-              "https://" +
-              process.env.MATRIXUSERNAME.substring(
-                process.env.MATRIXUSERNAME.indexOf(":") + 1
-              ) +
-              "/_matrix/client/r0/rooms/" +
-              process.env.MATRIXROOM +
-              "/send/m.room.message/" +
-              new Date().getTime() +
-              "?access_token=" +
-              accessToken +
-              "&limit=1",
-            body: JSON.stringify({
-              msgtype: "m.text",
-              body:
-                process.env.MATRIXMESSAGE +
-                (fuzIsOpen ? "" : " (crash ou oubli)")
-            }),
-            headers: {
-              "Content-Type": "application/json"
-            }
-          },
-          function(error, response, body2) {
-            if (!error) {
-              try {
-                lastClosed = new Date();
-                fs.writeFileSync(
-                  db,
-                  JSON.stringify({ fuzIsOpen, lastSeen, lastClosed })
-                );
-              } catch (err) {}
-            }
-            console.log(body2);
-            setTimeout(loop, 10 * 1000);
-          }
-        );
-      } else {
+
+const accessToken = process.env.MATRIXACCESSTOKEN;
+const loop = () => {
+  console.log("loop", JSON.stringify({ fuzIsOpen, lastSeen, lastOpened, lastClosed }));
+  if (
+    //fuzIsOpen &&
+    lastSeen < new Date() - defaultClosingTimeout &&
+    lastClosed < lastSeen
+  ) {
+    // the Fuz is newly closed, notify on matrix and write file to survive reboot
+    //https.put ... send message to Fuz process.env.MATRIXROOM
+    request.put(
+      {
+        url:
+          "https://" +
+          process.env.MATRIXUSERNAME.substring(
+            process.env.MATRIXUSERNAME.indexOf(":") + 1
+          ) +
+          "/_matrix/client/r0/rooms/" +
+          process.env.MATRIXROOM +
+          "/send/m.room.message/" +
+          new Date().getTime() +
+          "?access_token=" +
+          accessToken +
+          "&limit=1",
+        body: JSON.stringify({
+          msgtype: "m.text",
+          body:
+            process.env.MATRIXCLOSINGMESSAGE +
+            (fuzIsOpen ? "" : " (crash, oubli, passage bref…)")
+        }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      },
+      function(error, response, body2) {
+        if (!error) {
+          try {
+            lastClosed = new Date();
+            fs.writeFileSync(
+              db,
+              JSON.stringify({ fuzIsOpen, lastSeen, lastOpened, lastClosed })
+            );
+          } catch (err) {}
+        }
+        console.log(body2);
         setTimeout(loop, 10 * 1000);
       }
-    };
-    setTimeout(loop, 1 * 60 * 1000); // give some time for presence button to show up (1 min)
+    );
+  } else {
+    setTimeout(loop, 10 * 1000);
   }
-);
+};
+setTimeout(loop, 1 * 60 * 1000); // give some time for presence button to show up (1 min)
+
+const formatSeconds = function (seconds) { // https://stackoverflow.com/a/13368349
+  var seconds = Math.floor(seconds),
+      hours = Math.floor(seconds / 3600);
+  seconds -= hours*3600;
+  var minutes = Math.floor(seconds / 60);
+  seconds -= minutes*60;
+
+  if (hours   < 10) {hours   = "0"+hours;}
+  if (minutes < 10) {minutes = "0"+minutes;}
+  if (seconds < 10) {seconds = "0"+seconds;}
+  return hours+':'+minutes+':'+seconds;
+}
 
 if (process.env.PROJECT_DOMAIN != "") {
   process.on("SIGTERM", function() {
