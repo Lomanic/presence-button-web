@@ -88,14 +88,13 @@ app.get("/api", (req, res) => {
 app.get("/status", (req, res) => {
   // http basic auth handling without 3rd-party lib https://stackoverflow.com/a/33905671
   const auth = {
-    login: process.env.MATRIXUSERNAME,
-    password: process.env.MATRIXPASSWORD
+    login: process.env.ESPUSERNAME,
+    password: process.env.ESPPASSWORD
   };
 
   // parse login and password from headers
-  const b64auth = (req.headers.authorization || "").split(" ")[1] || "";
-  const [_, login, password] =
-    new Buffer(b64auth, "base64").toString().match(/(.*):(.*)/) || []; // slightly modified as we use : in username
+  const b64auth = (req.headers.authorization || '').split(' ')[1] || ''
+  const [login, password] = Buffer.from(b64auth, 'base64').toString().split(':')
 
   if (
     !login ||
@@ -103,6 +102,7 @@ app.get("/status", (req, res) => {
     login !== auth.login ||
     password !== auth.password
   ) {
+  	console.log("Bad auth", auth, login, password)
     res.set("WWW-Authenticate", 'Basic realm="Authentication required"');
     return res.status(401).send("Authentication required.");
   }
