@@ -141,7 +141,27 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	fmt.Fprintf(w, "Beautiful homepage")
+	fmt.Fprintf(w, `Fuz presence button public API
+
+This API provides the current opening status of the hackerspace. This server also posts messages on Matrix to notify when the space opens and closes.
+
+Usage:
+
+/         Shows help
+/api      Serves some JSON with lax CORS headers to get the current opening status programatically. The properties are the following:
+            * fuzIsOpen: (boolean) reflects if the space is currently open
+            * lastSeenAsOpen: (boolean) reflects if the last ping by the ESP was after being pushed (space officially opened)
+            * lastSeen: (date) last ESP ping timestamp
+            * lastOpened: (date) last space opening timestamp
+            * lastClosed: (date) last space closing timestamp
+            * processUptime: (duration) API process uptime
+/img      Serves an svg image showing if the space is open or closed.
+/status   Private endpoint used by the ESP (physical button) to regularly ping/update the opening status.
+
+
+Source code:        https://github.com/Lomanic/presence-button-web
+Source code mirror: https://git.interhacker.space/Lomanic/presence-button-web
+Documentation:      https://wiki.fuz.re/doku.php?id=projets:fuz:presence_button`)
 }
 
 func apiHandler(w http.ResponseWriter, r *http.Request) {
