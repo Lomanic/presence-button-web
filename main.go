@@ -84,6 +84,9 @@ func init() {
 	if err != nil {
 		panic(fmt.Sprintf("error creating matrix client: %s", err))
 	}
+	if _, err := matrix.GetOwnStatus(); err != nil { // a way to quickly check if access token is valid
+		panic(fmt.Sprintf("error getting matrix status: %s", err))
+	}
 
 	if config.MATRIXROOM == "" {
 		panic("MATRIXROOM is empty")
