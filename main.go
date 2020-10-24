@@ -1,18 +1,17 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/matrix-org/gomatrix"
 )
 
 type Status struct {
@@ -54,7 +53,8 @@ var (
 		// formerly https://www.flaticon.com/free-icon/closed_1234190, maybe try https://flaticons.net/customize.php?dir=Miscellaneous&icon=Closed.png without attribution
 		false: `<?xml version="1.0" ?><svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg"><defs><style>.cls-1{fill:#f8991d;}.cls-2{fill:#fd0;}.cls-3{fill:#314967;}</style></defs><title/><g data-name="18 Closed Sign" id="_18_Closed_Sign"><rect class="cls-1" height="36" rx="6" ry="6" width="96" x="16" y="64"/><circle class="cls-2" cx="64" cy="28" r="6"/><path class="cls-3" d="M71.85,77.83a4.37,4.37,0,0,1,2.34,1,1.93,1.93,0,1,0,2.08-3.25A7.94,7.94,0,0,0,71.85,74c-3.13,0-5.55,2.06-5.55,4.58,0,2.74,2.64,4.21,5.35,4.58.55.11,2,.45,2.26,1,0,.57-1.38,1-2,1a5.25,5.25,0,0,1-2.79-1.16,1.93,1.93,0,1,0-2.42,3,8.73,8.73,0,0,0,5.23,2c3.12,0,5.88-2,5.88-4.82s-2.88-4.4-5.66-4.78c-1.6-.31-2-.77-2-.77C70.15,78.39,70.8,77.83,71.85,77.83Z"/><path class="cls-3" d="M40,76.34V87a2,2,0,0,0,2,2h5.83a2,2,0,0,0,0-4H44V76.34A2,2,0,0,0,40,76.34Z"/><path class="cls-3" d="M50,81.48A7.16,7.16,0,1,0,57.23,74,7.32,7.32,0,0,0,50,81.48Zm10.26,0c0,2.89-3.21,4.64-5.27,2.43-1.94-2-.71-5.86,2.2-5.86A3.29,3.29,0,0,1,60.3,81.48Z"/><path class="cls-3" d="M34.44,78.82a2,2,0,0,0,2.49-3.21A7.7,7.7,0,0,0,32.15,74a7.6,7.6,0,0,0-7.6,7.48h0c0,6.3,7.44,9.7,12.39,5.86a2,2,0,0,0-2.51-3.2,3.52,3.52,0,1,1,0-5.31Z"/><path class="cls-3" d="M87.69,78.35a2,2,0,0,0,0-4H81.8a2,2,0,0,0-2,2V87a2,2,0,0,0,1,1.75V89h6.83a2,2,0,0,0,0-4H83.81V83.65H87a2,2,0,0,0,0-4h-3.2V78.35Z"/><path class="cls-3" d="M103.09,81.64a7.29,7.29,0,0,0-7.28-7.28H93.69a2,2,0,0,0-2,2V87a2,2,0,0,0,2,2h2.13A7.31,7.31,0,0,0,103.09,81.64ZM95.81,85h-.12V78.35h.12C100.14,78.35,100.18,84.93,95.81,85Z"/><path class="cls-3" d="M92.73,98H22a4,4,0,0,1-4-4V70a4,4,0,0,1,4-4H42.55a2,2,0,0,0,0-4H32.83L59.93,34.89a8,8,0,0,0,8.13,0L81.71,48.54a2,2,0,0,0,2.83-2.83L70.88,32.06A8,8,0,0,0,64,20a2,2,0,0,0,0,4,4,4,0,0,1,2.79,6.86C63.58,34,58.24,30.08,60.51,26a2,2,0,0,0-3.49-2,8,8,0,0,0,.09,8L27.17,62H22a8,8,0,0,0-8,8V94a8,8,0,0,0,8,8H92.73A2,2,0,0,0,92.73,98Z"/><path class="cls-3" d="M106,62h-5.17L88.09,49.26a2,2,0,0,0-2.83,2.83L95.17,62H76a2,2,0,0,0,0,4h30a4,4,0,0,1,4,4V94a4,4,0,0,1-4,4H98.51a2,2,0,0,0,0,4H106a8,8,0,0,0,8-8V70A8,8,0,0,0,106,62Z"/><path class="cls-3" d="M70,62H49.22a2,2,0,0,0,0,4H70A2,2,0,0,0,70,62Z"/></g></svg>`,
 	}
-	db *os.File
+	db     *os.File
+	matrix *gomatrix.Client
 )
 
 func init() {
@@ -79,6 +79,14 @@ func init() {
 	if config.MATRIXACCESSTOKEN == "" {
 		panic("MATRIXACCESSTOKEN is empty")
 	}
+	var err error
+	matrix, err = gomatrix.NewClient(fmt.Sprintf("https://%s", config.MATRIXUSERNAME[strings.Index(config.MATRIXUSERNAME, ":")+1:]), config.MATRIXUSERNAME, config.MATRIXACCESSTOKEN)
+	if err != nil {
+		panic(fmt.Sprintf("error creating matrix client: %s", err))
+	}
+	if err != nil {
+		panic(err)
+	}
 
 	if config.MATRIXROOM == "" {
 		panic("MATRIXROOM is empty")
@@ -97,7 +105,7 @@ func init() {
 		panic("ESPPASSWORD is empty")
 	}
 
-	err := os.MkdirAll(filepath.Dir(dbPath), 0755)
+	err = os.MkdirAll(filepath.Dir(dbPath), 0755)
 	if err != nil {
 		panic(err)
 	}
@@ -124,7 +132,7 @@ func checkClosure() {
 			// the Fuz is newly closed, notify on matrix and write file to survive reboot
 			// TODO: matrix msg
 			fmt.Println("the Fuz is newly closed, notify on matrix and write file to survive reboot")
-			err := sendMatrixMessage(config.MATRIXUSERNAME, config.MATRIXACCESSTOKEN, config.MATRIXROOM, config.MATRIXCLOSINGMESSAGE)
+			_, err := matrix.SendText(config.MATRIXROOM, config.MATRIXCLOSINGMESSAGE)
 			if err != nil {
 				fmt.Println("err:", err)
 				time.Sleep(10 * time.Second)
@@ -210,7 +218,7 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 	if status.FuzIsOpen && (status.LastOpened.Equal(status.LastClosed) || status.LastOpened.Before(status.LastClosed)) {
 		// the Fuz is newly opened, notify on matrix and write file to survive reboot
 		fmt.Println("the Fuz is newly opened, notify on matrix and write file to survive reboot")
-		err := sendMatrixMessage(config.MATRIXUSERNAME, config.MATRIXACCESSTOKEN, config.MATRIXROOM, config.MATRIXOPENINGMESSAGE)
+		_, err := matrix.SendText(config.MATRIXROOM, config.MATRIXOPENINGMESSAGE)
 		if err != nil {
 			fmt.Println("err:", err)
 			return
@@ -223,46 +231,6 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 		e.SetIndent("", "    ")
 		e.Encode(status)
 	}
-}
-
-func sendMatrixMessage(username, accessToken, room, messageText string) error {
-	type Message struct {
-		Msgtype string `json:"msgtype"`
-		Body    string `json:"body"`
-	}
-	client := &http.Client{}
-	message := Message{
-		Msgtype: "m.text",
-		Body:    messageText,
-	}
-	body := new(bytes.Buffer)
-	err := json.NewEncoder(body).Encode(message)
-	if err != nil {
-		return err
-	}
-	v := url.Values{}
-	v.Set("access_token", accessToken)
-	v.Set("limit", "1")
-	url := url.URL{
-		Scheme:   "https",
-		Host:     username[strings.Index(username, ":")+1:],
-		Path:     fmt.Sprintf("/_matrix/client/r0/rooms/%s/send/m.room.message/%d", room, time.Now().UnixNano()/1000000),
-		RawQuery: v.Encode(),
-	}
-	req, err := http.NewRequest(http.MethodPut, url.String(), body)
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	res, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-	resBody, _ := ioutil.ReadAll(res.Body)
-	fmt.Println(string(resBody))
-
-	return nil
 }
 
 func main() {
