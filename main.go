@@ -62,13 +62,23 @@ func init() {
 	if val, _ := strconv.Atoi(port); val > 0 {
 		config.PORT = port
 	}
+
+	config.MATRIXUSERNAME = os.Getenv("MATRIXUSERNAME")
+	config.MATRIXACCESSTOKEN = os.Getenv("MATRIXACCESSTOKEN")
+
 	config.MATRIXROOM = os.Getenv("MATRIXROOM")
 	config.MATRIXOPENINGMESSAGE = os.Getenv("MATRIXOPENINGMESSAGE")
 	config.MATRIXCLOSINGMESSAGE = os.Getenv("MATRIXCLOSINGMESSAGE")
-	config.MATRIXACCESSTOKEN = os.Getenv("MATRIXACCESSTOKEN")
-	config.MATRIXUSERNAME = os.Getenv("MATRIXUSERNAME")
+
 	config.ESPUSERNAME = os.Getenv("ESPUSERNAME")
 	config.ESPPASSWORD = os.Getenv("ESPPASSWORD")
+
+	if config.MATRIXUSERNAME == "" {
+		panic("MATRIXUSERNAME is empty")
+	}
+	if config.MATRIXACCESSTOKEN == "" {
+		panic("MATRIXACCESSTOKEN is empty")
+	}
 
 	if config.MATRIXROOM == "" {
 		panic("MATRIXROOM is empty")
@@ -79,11 +89,9 @@ func init() {
 	if config.MATRIXCLOSINGMESSAGE == "" {
 		panic("MATRIXCLOSINGMESSAGE is empty")
 	}
-	if config.MATRIXACCESSTOKEN == "" {
-		panic("MATRIXACCESSTOKEN is empty")
-	}
-	if config.MATRIXUSERNAME == "" {
-		panic("MATRIXUSERNAME is empty")
+
+	if config.ESPUSERNAME == "" {
+		panic("ESPUSERNAME is empty")
 	}
 	if config.ESPPASSWORD == "" {
 		panic("ESPPASSWORD is empty")
