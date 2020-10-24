@@ -105,8 +105,7 @@ func init() {
 	if err != nil && !os.IsNotExist(err) {
 		panic(err)
 	}
-	d := json.NewDecoder(db)
-	d.Decode(&status)
+	err = json.NewDecoder(db).Decode(&status)
 	if err != nil {
 		fmt.Println("error unmarshalling db:", err)
 	}
