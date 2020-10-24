@@ -233,9 +233,34 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func syncMatrix() {
+	syncer := matrix.Syncer.(*gomatrix.DefaultSyncer)
+	syncer.OnEventType("m.room.message", func(ev *gomatrix.Event) {
+		if ev.Sender != matrix.UserID {
+			matrix.MarkRead(ev.RoomID, ev.ID)
+		}
+	})
+
+	go func() { // set online status every 15 seconds
+		for {
+			if err := matrix.SetStatus("online", "up and running"); err != nil {
+				panic(fmt.Sprintf("error setting matrix status: %s", err))
+			}
+			time.Sleep(15 * time.Second)
+		}
+	}()
+
+	for {
+		if err := matrix.Sync(); err != nil {
+			fmt.Println("Sync() returned ", err)
+		}
+	}
+}
+
 func main() {
 	go updateUptime()
 	go checkClosure()
+	go syncMatrix()
 	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/api", apiHandler)
 	http.HandleFunc("/img", imgHandler)
