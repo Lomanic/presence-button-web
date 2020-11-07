@@ -198,15 +198,18 @@ func imgHandler(w http.ResponseWriter, r *http.Request) {
 
 func statusHandler(w http.ResponseWriter, r *http.Request) {
 	user, pass, ok := r.BasicAuth()
-	fmt.Println("user", user, "pass", pass, "ok", ok)
+	fmt.Printf("status notification by button... ")
 	if !ok || user != config.ESPUSERNAME || pass != config.ESPPASSWORD {
+		fmt.Printf("bad authentication: user:%v pass:%v\n", user, pass)
 		w.Header().Set("WWW-Authenticate", `Basic realm="Authentication required"`)
 		http.Error(w, "Authentication required", 401)
 		return
 	}
 	q := r.URL.Query()
-	status.FuzIsOpen = q.Get("fuzisopen") == "1"
-	status.LastSeenAsOpen = q.Get("fuzisopen") == "1"
+	fuzIsOpen := q.Get("fuzisopen") == "1"
+	fmt.Printf("button pushed: %v\n", fuzIsOpen)
+	status.FuzIsOpen = fuzIsOpen
+	status.LastSeenAsOpen = fuzIsOpen
 	status.LastSeen = time.Now()
 	fmt.Fprintf(w, "OK")
 
