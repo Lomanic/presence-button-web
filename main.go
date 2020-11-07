@@ -244,7 +244,7 @@ func syncMatrix() {
 	go func() { // set online status every 15 seconds
 		for {
 			if err := matrix.SetStatus("online", "up and running"); err != nil {
-				panic(fmt.Sprintf("error setting matrix status: %s", err))
+				fmt.Println("error setting matrix status:", err)
 			}
 			time.Sleep(15 * time.Second)
 		}
@@ -252,7 +252,7 @@ func syncMatrix() {
 
 	for {
 		if err := matrix.Sync(); err != nil {
-			fmt.Println("Sync() returned ", err)
+			fmt.Println("error syncing with matrix:", err)
 		}
 	}
 }
