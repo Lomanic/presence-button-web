@@ -130,9 +130,12 @@ func checkClosure() {
 	for {
 		if status.LastSeen.Add(defaultClosingTimeout).Before(time.Now()) && status.LastClosed.Before(status.LastSeen) {
 			// the Fuz is newly closed, notify on matrix and write file to survive reboot
-			// TODO: matrix msg
 			fmt.Println("the Fuz is newly closed, notify on matrix and write file to survive reboot")
-			_, err := matrix.SendText(config.MATRIXROOM, config.MATRIXCLOSINGMESSAGE)
+			msg := config.MATRIXCLOSINGMESSAGE
+			if !status.FuzIsOpen {
+				msg = fmt.Sprintf("%s : passage bref", msg)
+			}
+			_, err := matrix.SendText(config.MATRIXROOM, msg)
 			if err != nil {
 				fmt.Println("err:", err)
 				time.Sleep(10 * time.Second)
